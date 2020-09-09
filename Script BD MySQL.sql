@@ -537,30 +537,49 @@ select * from contacto;
 
 select * from tipo_contacto;
 
--- Realización de evento de comunicación
--- Insertar Persona
-set @tipo_documento = "DNI";/*El cliente lo ingresa*/
-set @numero_documento = "76146602";
+-- PROCESO EN LÍNEA
 
-set @id_tipo_documento = (select id from tipo_documento where descripcion = @tipo_documento);
--- select @id_tipo_documento;
+-- 1. Realización de evento de comunicación
+-- Insertar Party
+DELIMITER //
+CREATE PROCEDURE insertarParty(tipoDocumento varchar(3), numeroDocumento varchar(11))
+BEGIN
+	set @id_tipo_documento = (select id from tipo_documento where descripcion = tipoDocumento);
+	insert into party (id_tipo_documento, numero_documento) values (@id_tipo_documento, numeroDocumento);
+	select * from party;
+END//
+DELIMITER ;
+-- drop procedure insertarParty;
 
-insert into party (id_tipo_documento, numero_documento) values (@id_tipo_documento, @numero_documento);
+DELIMITER //
+CREATE PROCEDURE insertarPersona(idTipoDocumento numeric(1), numeroDocumento varchar(11), nombres varchar(50), ap varchar(50), am varchar(50), genero varchar(50), fn date)
+BEGIN
+	set @id_party = (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
+	insert into persona (id_party, nombres, apellido_paterno, apellido_materno, genero, fecha_nacimiento)
+	values (@id_party, nombres, ap, am, genero, fn);
+	select * from persona;
+END//
+DELIMITER ;
+-- drop procedure insertarPersona;
 
-select * from party;
+DELIMITER //
+CREATE PROCEDURE insertarPP(tipoDocumento varchar(3), numeroDocumento varchar(11), nombres varchar(50), ap varchar(50), am varchar(50), genero varchar(50), fn date)
+BEGIN
+	call insertarParty(tipoDocumento, numeroDocumento);
+	call insertarPersona(@id_tipo_documento, numeroDocumento, nombres, ap, am, genero, fn);
+END//
+DELIMITER ;
+-- drop procedure insertarPP;
 
-set @nombres = "Ronaldo Farid";
-set @apellido_paterno = "Nolasco";
-set @apellido_materno = "Chavez";
-set @genero = "M";
-set @fecha_nacimiento = '2000-12-06';
+-- select * from party;
+-- select * from persona;
 
-set @id_party = (select id from party where id_tipo_documento = @id_tipo_documento and numero_documento = @numero_documento);
 
-insert into persona (id_party, nombres, apellido_paterno, apellido_materno, genero, fecha_nacimiento)
-values (@id_party, @nombres, @apellido_paterno, @apellido_materno, @genero, @fecha_nacimiento);
+call insertarPP ("CdE", "76146699", "Ron","Nol","Cha","M",'2020-12-06');
 
-select * from persona;
+
+
+
 
 
 
