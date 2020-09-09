@@ -169,21 +169,25 @@ insert into tipo_documento values (3,'CdE');
 select * from tipo_documento;
 
 create table party(
-	id numeric(8) primary key,
+	id MEDIUMINT primary key AUTO_INCREMENT,
 	id_tipo_documento numeric(1) references tipo_documento(id),
 	numero_documento numeric(11),
-	descripcion varchar(80)
+	unique(id_tipo_documento,numero_documento)
 );
 
+drop table party;
+
 create table persona(
-	id numeric(6) primary key,
-	id_party numeric(8) unique references party(id),
-	nombre varchar(80),
+	id MEDIUMINT primary key AUTO_INCREMENT,
+	id_party MEDIUMINT unique references party(id),
+	nombres varchar(80),
 	apellido_paterno varchar(80),
 	apellido_materno varchar(80),
 	genero varchar(1) check(genero in ('M','F')),
 	fecha_nacimiento date
 );
+
+drop table persona;
 
 create table organizacion(
 	id numeric(6) primary key,
@@ -367,10 +371,12 @@ insert into tipo_contacto values (3,'Correo');
 insert into tipo_contacto values (4,'Telegram');
 
 create table contacto(
-	id mediumint primary key auto_increment,
     id_tipo_contacto numeric(2) references tipo_contacto(id),
-    valor varchar(50)
+    valor varchar(50),
+	primary key(id_tipo_contacto, valor)
 );
+
+drop table contacto;
 
 create table party_contacto(
 	id numeric(8) primary key,
@@ -532,6 +538,33 @@ select * from contacto;
 select * from tipo_contacto;
 
 -- Realización de evento de comunicación
+-- Insertar Persona
+set @tipo_documento = "DNI";/*El cliente lo ingresa*/
+set @numero_documento = "76146602";
+
+set @id_tipo_documento = (select id from tipo_documento where descripcion = @tipo_documento);
+-- select @id_tipo_documento;
+
+insert into party (id_tipo_documento, numero_documento) values (@id_tipo_documento, @numero_documento);
+
+select * from party;
+
+set @nombres = "Ronaldo Farid";
+set @apellido_paterno = "Nolasco";
+set @apellido_materno = "Chavez";
+set @genero = "M";
+set @fecha_nacimiento = '2000-12-06';
+
+set @id_party = (select id from party where id_tipo_documento = @id_tipo_documento and numero_documento = @numero_documento);
+
+insert into persona (id_party, nombres, apellido_paterno, apellido_materno, genero, fecha_nacimiento)
+values (@id_party, @nombres, @apellido_paterno, @apellido_materno, @genero, @fecha_nacimiento);
+
+select * from persona;
+
+
+
+
 -- 1. Insertar contacto
 
 set @tipo_contacto_desc = "Celular";-- El cliente la ingresa
