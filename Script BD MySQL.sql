@@ -367,7 +367,7 @@ insert into tipo_contacto values (3,'Correo');
 insert into tipo_contacto values (4,'Telegram');
 
 create table contacto(
-	id numeric(8) primary key,
+	id mediumint primary key auto_increment,
     id_tipo_contacto numeric(2) references tipo_contacto(id),
     valor varchar(50)
 );
@@ -524,3 +524,23 @@ delete pedido, estado_pedido
 from pedido p, estado_pedido ep, tipo_estado_pedido tep 
 where p.id = ep.id_pedido and ep.id_tipo_estado_pedido = tep.id 
 and tei.descripcion = 'Entregado';
+
+show tables;
+
+select * from contacto;
+
+select * from tipo_contacto;
+
+-- Realización de evento de comunicación
+-- 1. Insertar contacto
+
+set @tipo_contacto_desc = "Celular";-- El cliente la ingresa
+set @contacto_valor= "920796255";-- El cliente la ingresa
+
+set @id_contacto = (select id from tipo_contacto where descripción = @tipo_contacto_desc);
+
+insert into contacto (id_tipo_contacto, valor) values (@id_contacto, @contacto_valor);
+
+select * from contacto;
+
+select descripción, valor from contacto c, tipo_contacto tc where c.id_tipo_contacto = tc.id;
