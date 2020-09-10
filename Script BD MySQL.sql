@@ -612,16 +612,44 @@ DELIMITER ;
 -- 3. Insertar Party-Contacto
 DROP PROCEDURE IF EXISTS insertarPC;
 DELIMITER //
-CREATE PROCEDURE insertarPC(tipoDocumento varchar(3), numeroDocumento numeric(11), tipoContacto varchar(20), valor_cont varchar(50), fecha_inicio date, fecha_fin date, descrip varchar(50))
+CREATE PROCEDURE insertarPC(tipoDocumento varchar(3), numeroDocumento numeric(11), tipoContacto varchar(20), valorCont varchar(50), fecha_inicio date, fecha_fin date, descrip varchar(50))
 BEGIN
 	DECLARE idTipoDocumento NUMERIC(1) DEFAULT (select id from tipo_documento where descripcion = tipoDocumento);
 	DECLARE idTipoContacto NUMERIC(2) DEFAULT (select id from tipo_contacto where descripcion = tipoContacto);
 	DECLARE idParty MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
-	DECLARE idContacto MEDIUMINT DEFAULT (select id from contacto where id_tipo_contacto = idTipoContacto and valor = valor_cont);
+	DECLARE idContacto MEDIUMINT DEFAULT (select id from contacto where id_tipo_contacto = idTipoContacto and valor = valorCont);
 	insert into party_contacto (id_party, id_contacto, fecha_inicio, fecha_fin, descripcion) values (idParty, idContacto, fecha_inicio, fecha_fin, descrip);
 	select * from party_contacto;
 END//
 DELIMITER ;
+
+-- 4. Insertar Evento de Comunicación
+DROP PROCEDURE IF EXISTS insertarEC;
+DELIMITER //
+CREATE PROCEDURE insertarEC(tipoDocumento varchar(3), numeroDocumento numeric(11), tipoContacto varchar(20), valorCont varchar(50),
+	tipoDocumento_2 varchar(3), numeroDocumento_2 numeric(11), tipoContacto_2 varchar(20), valorCont_2 varchar(50), 
+	tipoEventoComunicacion varchar(20), fecha_hora_inicio timestamp, fecha_hora_fin timestamp)
+BEGIN
+	DECLARE idTipoDocumento NUMERIC(1) DEFAULT (select id from tipo_documento where descripcion = tipoDocumento);
+	DECLARE idTipoContacto NUMERIC(2) DEFAULT (select id from tipo_contacto where descripcion = tipoContacto);
+	DECLARE idParty MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
+	DECLARE idContacto MEDIUMINT DEFAULT (select id from contacto where id_tipo_contacto = idTipoContacto and valor = valorCont);
+	DECLARE idPartyContacto MEDIUMINT DEFAULT (select id from party_contacto where id_party = idParty and id_contacto = idContacto);
+	
+	DECLARE idTipoDocumento_2 NUMERIC(1) DEFAULT (select id from tipo_documento where descripcion = tipoDocumento_2);
+	DECLARE idTipoContacto_2 NUMERIC(2) DEFAULT (select id from tipo_contacto where descripcion = tipoContacto_2);
+	DECLARE idParty_2 MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumento_2 and numero_documento = numeroDocumento_2);
+	DECLARE idContacto_2 MEDIUMINT DEFAULT (select id from contacto where id_tipo_contacto = idTipoContacto_2 and valor = valorCont_2);
+	DECLARE idPartyContacto_2 MEDIUMINT DEFAULT (select id from party_contacto where id_party = idParty_2 and id_contacto = idContacto_2);
+	
+	DECLARE idTipoEC NUMERIC(1) DEFAULT (select id from tipo_evento_comunicacion where descripcion = tipoEventoComunicacion);
+	
+	insert into evento_comunicacion (id_party_contacto_origen, id_party_contacto_destino, id_tipo_evento_comunicacion, fecha_hora_inicio, fecha_hora_fin) 
+	values (idPartyContacto, idPartyContacto_2, idTipoEC, fecha_hora_inicio, fecha_hora_fin);
+	select * from evento_comunicacion;
+END//
+DELIMITER ;
+
 
 -- Proceso
 
@@ -643,7 +671,9 @@ call insertarPC ("RUC", "74547609", "Fijo" ,"5687037",'2010-01-15',null,"Telefon
 
 select * from party_contacto;
 
+call insertarEC ("DNI", "66146602", "Celular" ,"920796255", "RUC", "74547609", "Fijo" ,"5687037", "Coordinación", '2020-09-09 18:30:12', '2020-09-09 18:35:17');
 
+select * from evento_comunicacion;
 
 
 
