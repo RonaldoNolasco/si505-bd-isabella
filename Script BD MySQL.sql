@@ -196,6 +196,7 @@ create table organizacion(
 	tipo_sociedad varchar(10),
 	comentario varchar(80)
 );
+drop table organizacion;
 
 create table tipo_rol(
 	id numeric(3) primary key,
@@ -566,8 +567,7 @@ DROP PROCEDURE IF EXISTS insertarPersona;
 DELIMITER //
 CREATE PROCEDURE insertarPersona(idTipoDocumento numeric(1), numeroDocumento varchar(11), nombres varchar(50), ap varchar(50), am varchar(50), genero varchar(50), fn date)
 BEGIN
-	DECLARE id_party MEDIUMINT;
-	set id_party = (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
+	DECLARE id_party MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
 	insert into persona (id_party, nombres, apellido_paterno, apellido_materno, genero, fecha_nacimiento) values (id_party, nombres, ap, am, genero, fn);
 	select * from persona;
 END//
@@ -577,9 +577,8 @@ DROP PROCEDURE IF EXISTS insertarOrganizacion;
 DELIMITER //
 CREATE PROCEDURE insertarOrganizacion(idTipoDocumento numeric(1), numeroDocumento varchar(11), nombre varchar(80), tipo_sociedad varchar(10), comentario varchar(80))
 BEGIN
-	set @id_party = (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
-	insert into organizacion (id_party, nombre, tipo_sociedad, comentario)
-	values (@id_party, nombre, tipo_sociedad, comentario);
+	DECLARE idParty MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
+	insert into organizacion (id_party, nombre, tipo_sociedad, comentario) values (idParty, nombre, tipo_sociedad, comentario);
 	select * from organizacion;
 END//
 DELIMITER ;
@@ -598,10 +597,6 @@ BEGIN
 	END IF;
 END//
 DELIMITER ;
-
-select * from party;
-select * from persona;
-select * from organizacion;
 
 -- 2. Insertar contacto
 DROP PROCEDURE IF EXISTS insertarContacto;
@@ -623,26 +618,32 @@ BEGIN
 	DECLARE idTipoContacto NUMERIC(2) DEFAULT (select id from tipo_contacto where descripcion = tipoContacto);
 	DECLARE idParty MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumento and numero_documento = numeroDocumento);
 	DECLARE idContacto MEDIUMINT DEFAULT (select id from contacto where id_tipo_contacto = idTipoContacto and valor = valor_cont);
-	select idTipoDocumento, idTipoContacto, idParty, idContacto;
+	insert into party_contacto (id_party, id_contacto, fecha_inicio, fecha_fin, descripcion) values (idParty, idContacto, fecha_inicio, fecha_fin, descrip);
+	select * from party_contacto;
 END//
 DELIMITER ;
-select * from party where id_tipo_documento = 1;
-desc party;
-select * from party;
 
-call insertarPC("DNI", "76146602", "Celular", "920796255", '2019-01-15',null,"Buen fono");
-
-select * from party;
 -- Proceso
 
-call insertarPPO ("DNI", "76146602", "Ronaldo","Nolasco","Chavez","M",'2020-12-06',null,null,null);
-call insertarPPO ("RUC", "76146608", null,null,null,null,null,"Santa Catalina","SAC","Buen proveedor");
+call insertarPPO ("DNI", "66146602", "Ronaldo","Nolasco","Chavez","M",'2020-12-06',null,null,null);
+call insertarPPO ("RUC", "74547609", null,null,null,null,null,"Santa Catalina","SAC","Buen proveedor");
+
+select * from party;
+select * from persona;
+select * from organizacion;
+
 call insertarContacto ("Celular", "920796255");
+call insertarContacto ("Fijo", "5687037");
 
-select * from contacto c, tipo_contacto tc where c.id_tipo_contacto = tc.id;
-
-desc contacto;
-desc tipo_contacto;
-
-select id from tipo_documento where descripcion = "DNI";
+select * from contacto;
 select * from tipo_contacto;
+
+call insertarPC ("DNI", "66146602", "Celular" ,"920796255",'2020-01-15',null,"Buen fono");
+call insertarPC ("RUC", "74547609", "Fijo" ,"5687037",'2010-01-15',null,"Telefono de casa");
+
+select * from party_contacto;
+
+
+
+
+
