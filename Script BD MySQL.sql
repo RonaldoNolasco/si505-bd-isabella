@@ -288,13 +288,14 @@ insert into contenedor values (3,1,2,1236,null);
 select * from contenedor;
 
 create table item(
-	id numeric(10) primary key,
+	id MEDIUMINT primary key AUTO_INCREMENT,
 	id_producto numeric(8) references producto(id),
 	id_contenedor numeric(10) references contenedor(id),
 	id_almacen numeric(2) references almacen(id),
 	numero_serie numeric(11),
     cantidad_mano numeric(4)
 );
+drop table item;
 
 create table tipo_estado_pedido(
 	id numeric(1) primary key,
@@ -430,19 +431,20 @@ create table evento_comunicacion(
 );
 
 create table pedido(
-	id numeric(8) primary key,
-    id_party_emisor numeric(8) references party(id),
-    id_party_receptor numeric(8) references party(id),
-    id_party_creador numeric(8) references party(id),
-    id_party_modificador numeric(8) references party(id),
-    fecha_hora_creacion date,
-    fecha_hora_modificacion date,
+	id MEDIUMINT primary key AUTO_INCREMENT,
+    id_party_emisor MEDIUMINT references party(id),
+    id_party_receptor MEDIUMINT references party(id),
+    /*id_party_creador numeric(8) references party(id),
+    id_party_modificador numeric(8) references party(id),*/
+    fecha_hora_creacion timestamp,
+    fecha_hora_modificacion timestamp,
     comision_vendedor numeric(6,2),
     monto_pedido numeric(6,2),
     cobro_logistico numeric(6,2),
     impuestos numeric(6,2),
     subtotal numeric(8,2)
 );
+drop table pedido;
 
 create table estado_pedido(
 	id numeric(10) primary key,
@@ -453,11 +455,14 @@ create table estado_pedido(
 );
 
 create table detalle_pedido(
-	id numeric(10) primary key,
-    id_pedido numeric(8) references pedido(id),
+	id MEDIUMINT primary key AUTO_INCREMENT,
+    id_pedido MEDIUMINT references pedido(id),
     id_producto numeric(8) references producto(id),
-    cantidad numeric(6)
+    cantidad numeric(6),
+    precio_unitario numeric(8,2),
+    unique (id_pedido, id_producto)
 );
+drop table detalle_pedido;
 
 create table estado_detalle_pedido(
 	id numeric(10) primary key,
@@ -544,13 +549,6 @@ select * from tipo_contacto;
 
 -- 1. Realización de evento de comunicación
 -- Insertar Party
-DELIMITER //
-CREATE FUNCTION GetTipoDoc ()
-
-
-END; //
-DELIMITER ;
-
 DROP PROCEDURE IF EXISTS insertarParty;
 DELIMITER //
 CREATE PROCEDURE insertarParty(tipoDocumento varchar(3), numeroDocumento varchar(11))
@@ -650,11 +648,11 @@ BEGIN
 END//
 DELIMITER ;
 
-
 -- Proceso
 
 call insertarPPO ("DNI", "66146602", "Ronaldo","Nolasco","Chavez","M",'2020-12-06',null,null,null);
 call insertarPPO ("RUC", "74547609", null,null,null,null,null,"Santa Catalina","SAC","Buen proveedor");
+call insertarPPO ("RUC", "41245752", null,null,null,null,null,"Isabella","SAC","Empresa");
 
 select * from party;
 select * from persona;
@@ -675,5 +673,62 @@ call insertarEC ("DNI", "66146602", "Celular" ,"920796255", "RUC", "74547609", "
 
 select * from evento_comunicacion;
 
+-- 2. Compra de Insumos
+-- Insertar Pedido
+DROP PROCEDURE IF EXISTS insertarCompra;
+DELIMITER //
+CREATE PROCEDURE insertarCompra(tipoDocumentoE varchar(3), numeroDocumentoE varchar(11))
+BEGIN
+	DECLARE idTipoDocumentoE NUMERIC(1) DEFAULT (select id from tipo_documento where descripcion = tipoDocumentoE);
+	DECLARE idPartyE MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumentoE and numero_documento = numeroDocumentoE);
 
+	DECLARE idTipoDocumentoR NUMERIC(1) DEFAULT (select id from tipo_documento where descripcion = "RUC");	
+	DECLARE idPartyR MEDIUMINT DEFAULT (select id from party where id_tipo_documento = idTipoDocumentoR and numero_documento = "41245752");
+	
+	insert into pedido (id_party_emisor, id_party_receptor,fecha_hora_creacion, fecha_hora_modificacion, comision_vendedor, monto_pedido, cobro_logistico, impuestos, subtotal)
+	values (idPartyE, idPartyR, current_timestamp(), null, null, null, null, null, null);
+	select * from pedido;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS insertarDetalleCompra;
+DELIMITER //
+CREATE PROCEDURE insertarDetalleCompra(idPedido MEDIUMINT, nombreProducto varchar(40), cantidadP INT)
+BEGIN
+	-- DECLARE p1 INT DEFAULT 0;
+	DECLARE idProducto NUMERIC(8) DEFAULT (select id from producto where nombre = nombreProducto);
+	DECLARE precioUnitario NUMERIC(8,2) DEFAULT (select sum(costo) from componente_costo where id_producto = idProducto);-- Falta agregar las fechas
+	IF (select EXISTS (select * from detalle_pedido where id_pedido = idPedido and id_producto = idProducto)) = 1
+		THEN update detalle_pedido set cantidad = cantidadP where id_pedido = idPedido and id_producto = idProducto;
+	ELSE insert into detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario) values (idPedido, idProducto, cantidadP, precioUnitario);
+	END IF;
+	update pedido set subtotal = (select sum(precio_unitario * cantidad) from detalle_pedido where id_pedido = idPedido) where id = idPedido;
+	/*
+	label1: LOOP
+		SET p1 = p1 + 1;
+		IF  p1 <= cantidad THEN 
+			insert into item (id_producto) values (idProducto);
+			ITERATE label1;
+		END  IF;
+		LEAVE label1;
+	END LOOP;
+	*/
+	select * from detalle_pedido;
+END//
+DELIMITER ;
+
+call insertarCompra ("RUC", "74547609");
+select * from pedido;
+
+call insertarDetalleCompra(2, "Pulsera PiAz PiNe AlCrPl", 7);
+select * from pedido;
+select * from item;
+select * from detalle_pedido;
+select * from producto;
+
+select * from componente_costo;
+insert into componente_costo values (1,1,1,null,null,8.2);
+insert into componente_costo values (2,1,2,null,null,2.5);
+-- Implementar mas productos con sus precios
+-- Cuando el estado del pedido pasa a entregado, se tienen que agregar los items a la tabla
 
