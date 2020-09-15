@@ -158,7 +158,8 @@ BEGIN
 	-- Hacerlo trigger
 	update pedido set monto_pedido = (select sum(precio_unitario * cantidad) from detalle_pedido where id_pedido = idPedido), comision_vendedor = monto_pedido * 0.2, 
 	cobro_logistico = monto_pedido * 0.1, impuestos = monto_pedido * 0.18, subtotal = monto_pedido + comision_vendedor + cobro_logistico + impuestos where id = idPedido;
-);
+END//
+DELIMITER ;
 
 DROP PROCEDURE IF EXISTS insertarEstadoCompra;
 DELIMITER //
@@ -166,10 +167,33 @@ CREATE PROCEDURE insertarEstadoCompra(idPedido MEDIUMINT, tipoEstadoPedido VARCH
 BEGIN
 	DECLARE idTipoEstadoPedido NUMERIC(1) DEFAULT (select id from tipo_estado_pedido where descripcion = tipoEstadoPedido);
 	INSERT INTO estado_pedido (id_pedido, id_tipo_estado_pedido) VALUES (idPedido , idTipoEstadoPedido);
+END//
+DELIMITER ;
 
-desc estado_pedido;
+select * from estado_pedido;
 
-	select * from tipo_estado_pedido;
+DROP TRIGGER IF EXISTS compraItems;
+delimiter //
+CREATE TRIGGER compraItems BEFORE INSERT ON estado_pedido
+FOR EACH ROW
+BEGIN
+	DECLARE n INT DEFAULT (SELECT COUNT(*) FROM detalle_pedido WHERE id_pedido = NEW.id_pedido);
+	DECLARE i INT DEFAULT 0;
+	IF NEW.id_tipo_estado_pedido = 3 THEN
+		WHILE i<n DO 
+			INSERT INTO item (id_producto) VALUES (1);
+			SET i = i + 1;
+		END WHILE;
+	END IF;
+END;//
+delimiter ;
+
+
+		
+		
+
+SELECT * FROM estado_pedido;
+
 	/*
 	label1: LOOP
 		SET p1 = p1 + 1;
@@ -181,8 +205,6 @@ desc estado_pedido;
 	END LOOP;
 	*/
 	select * from detalle_pedido;
-END//
-DELIMITER ;
 
 select sum(costo) from componente_costo where id_producto = 2 and fecha_fin is null;
 
@@ -192,10 +214,15 @@ select * from pedido;
 
 call insertarDetalleCompra(1, "Pulsera PiAz PiNe AlCrPl", 3);
 call insertarDetalleCompra(1, "AlCrPl", 4);
-select * from pedido;
-select * from item;
 select * from detalle_pedido;
-select * from producto;
+
+CALL insertarEstadoCompra(1,"En almacen");
+CALL insertarEstadoCompra(1,"Despachado");
+CALL insertarEstadoCompra(1,"Entregado");
+
+SELECT * FROM estado_pedido;
+
+SELECT * FROM item;
 
 select * from componente_costo;
 
@@ -209,15 +236,7 @@ SELECT * FROM tipo_estado_pedido;
 
 SELECT * FROM item;
 
-delimiter //
-CREATE TRIGGER pedido_test BEFORE INSERT ON estado_pedido
-FOR EACH ROW
-BEGIN
-	IF NEW.id_tipo_estado_pedido = 3 THEN
-		INSERT INTO item (id_producto) VALUES (1);
-	END IF;
-END;//
-delimiter ;
+
 
 SELECT * FROM estado_pedido;
 SELECT * FROM item;

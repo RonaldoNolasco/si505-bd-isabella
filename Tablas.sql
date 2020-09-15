@@ -314,7 +314,7 @@ create table tipo_estado_pedido(
     descripcion varchar(10)
 );
 
-insert into tipo_estado_pedido values (1,'En almacén');
+insert into tipo_estado_pedido values (1,'En almacen');
 insert into tipo_estado_pedido values (2,'Despachado');
 insert into tipo_estado_pedido values (3,'Entregado');
 
