@@ -102,7 +102,6 @@ END//
 DELIMITER ;
 
 -- Proceso
-
 call insertarPPO ("DNI", "66146602", "Ronaldo","Nolasco","Chavez","M",'2020-12-06',null,null,null);
 call insertarPPO ("RUC", "74547609", null,null,null,null,null,"Santa Catalina","SAC","Buen proveedor");
 call insertarPPO ("RUC", "41245752", null,null,null,null,null,"Isabella","SAC","Empresa");
@@ -126,8 +125,8 @@ call insertarEC ("DNI", "66146602", "Celular" ,"920796255", "RUC", "74547609", "
 
 select * from evento_comunicacion;
 
--- 2. Compra de Insumos
--- Insertar Pedido
+-- Compra de Insumos
+-- 1. Insertar Pedido
 DROP PROCEDURE IF EXISTS insertarCompra;
 DELIMITER //
 CREATE PROCEDURE insertarCompra(tipoDocumentoE varchar(3), numeroDocumentoE varchar(11))
@@ -144,23 +143,24 @@ BEGIN
 END//
 DELIMITER ;
 
+-- 2. Insertar detalle de la compra
 DROP PROCEDURE IF EXISTS insertarDetalleCompra;
 DELIMITER //
 CREATE PROCEDURE insertarDetalleCompra(idPedido MEDIUMINT, nombreProducto varchar(40), cantidadP INT)
 BEGIN
-	-- DECLARE p1 INT DEFAULT 0;
 	DECLARE idProducto NUMERIC(8) DEFAULT (select id from producto where nombre = nombreProducto);
 	DECLARE precioUnitario NUMERIC(8,2) DEFAULT (select sum(costo) from componente_costo where id_producto = idProducto and fecha_fin is null);-- Falta agregar las fechas
 	IF (select EXISTS (select * from detalle_pedido where id_pedido = idPedido and id_producto = idProducto)) = 1
 		THEN update detalle_pedido set cantidad = cantidadP, precio_unitario = precioUnitario where id_pedido = idPedido and id_producto = idProducto;
 	ELSE insert into detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario) values (idPedido, idProducto, cantidadP, precioUnitario);
 	END IF;
-	-- Hacerlo trigger
+	-- Hacerlo trigger, para que cada vez que se actualize el detalle de la compra, el pedido también
 	update pedido set monto_pedido = (select sum(precio_unitario * cantidad) from detalle_pedido where id_pedido = idPedido), comision_vendedor = monto_pedido * 0.2, 
 	cobro_logistico = monto_pedido * 0.1, impuestos = monto_pedido * 0.18, subtotal = monto_pedido + comision_vendedor + cobro_logistico + impuestos where id = idPedido;
 END//
 DELIMITER ;
 
+--3. Insertar estado de la compra
 DROP PROCEDURE IF EXISTS insertarEstadoCompra;
 DELIMITER //
 CREATE PROCEDURE insertarEstadoCompra(idPedido MEDIUMINT, tipoEstadoPedido VARCHAR(10))
@@ -179,32 +179,36 @@ FOR EACH ROW
 BEGIN
 	DECLARE n INT DEFAULT (SELECT COUNT(*) FROM detalle_pedido WHERE id_pedido = NEW.id_pedido);
 	DECLARE i INT DEFAULT 0;
+	DECLARE j INT DEFAULT 0;
+	DECLARE cantidadPedida NUMERIC(8) DEFAULT 0;
+	DECLARE idProducto NUMERIC(8) DEFAULT 0;
 	IF NEW.id_tipo_estado_pedido = 3 THEN
-		WHILE i<n DO 
-			INSERT INTO item (id_producto) VALUES (1);
+		WHILE i<n DO
+			SET cantidadPedida = (SELECT cantidad FROM detalle_pedido LIMIT i,1);
+			SET idProducto = (SELECT id_producto FROM detalle_pedido LIMIT i,1);
+			label1: LOOP
+				SET j = j + 1;
+				IF j <= cantidadPedida THEN 
+					INSERT INTO item (id_producto) VALUES (idProducto);
+					ITERATE label1;
+				END IF;
+				LEAVE label1;
+			END LOOP;
 			SET i = i + 1;
+			SET j = 0;
 		END WHILE;
 	END IF;
 END;//
 delimiter ;
+-- Ver que contenedor y almacen ponerle
+DESCRIBE detalle_pedido;
+SELECT * FROM detalle_pedido;
+SELECT * FROM item;
 
+SELECT * FROM detalle_pedido;
+SELECT * FROM estado_pedido LIMIT 0,1;
 
-		
-		
-
-SELECT * FROM estado_pedido;
-
-	/*
-	label1: LOOP
-		SET p1 = p1 + 1;
-		IF  p1 <= cantidad THEN 
-			insert into item (id_producto) values (idProducto);
-			ITERATE label1;
-		END  IF;
-		LEAVE label1;
-	END LOOP;
-	*/
-	select * from detalle_pedido;
+select * from detalle_pedido;
 
 select sum(costo) from componente_costo where id_producto = 2 and fecha_fin is null;
 
@@ -219,10 +223,12 @@ select * from detalle_pedido;
 CALL insertarEstadoCompra(1,"En almacen");
 CALL insertarEstadoCompra(1,"Despachado");
 CALL insertarEstadoCompra(1,"Entregado");
-
 SELECT * FROM estado_pedido;
 
+DELETE FROM estado_pedido WHERE id = 11;
+
 SELECT * FROM item;
+DELETE FROM item;
 
 select * from componente_costo;
 
@@ -245,90 +251,5 @@ INSERT INTO estado_pedido (id_tipo_estado_pedido,id_pedido) VALUES (3,1);
 
 SELECT descripcion, numero_documento FROM party p INNER JOIN tipo_documento td ON p.id_tipo_documento = td.id;
 
-SELECT 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-create table prueba(
-	id numeric(5),
-	estado NUMERIC(1)
-);
-CREATE TABLE prueba_2(
-	id NUMERIC(5)
-);
-
-CREATE TABLE ACCOUNT(
-	amount NUMERIC(5)
-);
-DROP TABLE prueba;
-
-
-create trigger test before insert on prueba FOR EACH ROW
-BEGIN
-	IF (NEW.estado = 1) THEN INSERT INTO prueba_2 (id) VALUES (NEW.id);
-END;
-
-
-delimiter //
-CREATE TRIGGER upd_check BEFORE UPDATE ON prueba
-       FOR EACH ROW
-       BEGIN
-           IF NEW.estado = 1 THEN SET NEW.estado = 0;
-           END IF;
-       END;
-END;//
-delimiter ;
-
-DROP TRIGGER upd_check;
-
-delimiter //
-CREATE TRIGGER upd_test BEFORE INSERT ON prueba
-FOR EACH ROW
-BEGIN
-	IF NEW.estado = 1 THEN
-		INSERT INTO prueba_2 VALUES (5);
-	END IF;
-END;//
-delimiter ;
-
-SELECT * FROM prueba;isabella
-SELECT * FROM prueba_2;
-DROP TABLE account;
-
-INSERT INTO prueba VALUES (12,1);
-
-
-DROP TRIGGER upd_test;
-
-
-
-
-UPDATE prueba SET id = 2;
-
-delimiter //
-CREATE TRIGGER upd_check BEFORE UPDATE ON ACCOUNT
-FOR EACH ROW
-BEGIN
-	IF NEW.amount < 0 THEN
-		SET NEW.amount = 0;
-	ELSEIF NEW.amount > 100 THEN
-      SET NEW.amount = 100;
-	END IF;
-END;//
-delimiter ;
 
 
