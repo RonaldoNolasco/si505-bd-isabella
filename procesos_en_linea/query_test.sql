@@ -1,0 +1,2 @@
+SELECT COUNT(*) FROM item i inner join estado_item ei ON (i.id = ei.id_item) WHERE id_producto = idProducto
+				AND id_tipo_estado_item = 1 AND not EXISTS (SELECT * FROM estado_item WHERE id_item = i.id AND id_tipo_estado_item = 2)

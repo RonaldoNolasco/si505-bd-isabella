@@ -5,42 +5,45 @@ use isabella;
 
 create table categoria_producto(
 	id numeric(1,0) primary key,
-	descripcion varchar(9) check (descripcion in ('Collar','Pulsera','Arete','Anillo','Insumo'))
+	descripcion VARCHAR(10) check (descripcion in ('Collar','Pulsera','Arete','Anillo','Insumo','Contenedor'))
 );
 
-insert into categoria_producto values (1,'Collar');
-insert into categoria_producto values (2,'Pulsera');
-insert into categoria_producto values (3,'Arete');
-insert into categoria_producto values (4,'Anillo');
-insert into categoria_producto values (5,'Insumo');
+insert into categoria_producto values (1,'Collar'), (2,'Pulsera'), (3,'Arete'), (4,'Anillo'), (5,'Insumo'), (6,'Contenedor');
 
 select * from categoria_producto;
 
-create table producto(
-	id numeric(8) primary key,
+DROP TABLE IF EXISTS producto;
+CREATE TABLE producto(
+	id MEDIUMINT PRIMARY KEY AUTO_INCREMENT,
 	id_categoria_producto numeric(1) references categoria_producto(id),
-	nombre varchar(40),
-	comentario varchar(100),
+	nombre VARCHAR(150),
 	fecha_ingreso date,
-	fecha_salida date,
-	imagen_referencial varchar(50)
+	fecha_salida date
 );
 
-insert into producto values (1,2,'Pulsera PiAz PiNe AlCrPl','Pulsera de piedras azul y negra con alambre cromado plomo','2020-01-01','2020-02-01','url');
-insert into producto values (2,5,'AlCrPl','Alambre cromado plomo','2020-01-01','2020-02-01','url');
-
+insert into producto (id_categoria_producto, nombre, fecha_ingreso, fecha_salida)
+VALUES (1, 'Collar de piedras negras con colgante azul y alambre cromado', '2019-10-30',NULL),
+(2,'Pulsera de piedras azules con alambre cromado plomo','2020-01-01',NULL),
+(3,'Arete de perlas rosadas','2020-12-01',NULL),
+(4,'Anillo de mostacillas negras','2020-12-01',NULL),
+(5,'Piedra de rio negra','2019-01-01',NULL),
+(5,'Colgante azul','2019-01-01',NULL),
+(5,'Perla de rio','2019-01-01',NULL),
+(5,'Coral','2019-01-01',NULL),
+(5,'Alambre cromado','2019-01-01',NULL),
+(6,'Bolsa como contenedor','2020-01-01',NULL),
+(6,'Caja como contenedor','2020-01-01',NULL);
 select * from producto;
 
+DROP TABLE IF EXISTS componente_producto;
 create table componente_producto(
-	id numeric(8) primary key,
-	id_insumo numeric(8) references producto(id),
+	id MEDIUMINT primary KEY AUTO_INCREMENT,
 	id_producto numeric(8) references producto(id),
-	cantidad_uso numeric(6),
-	comentario varchar(60)
+	id_insumo numeric(8) references producto(id),
+	cantidad_uso numeric(6)/*,
+	comentario varchar(60)*/
 );
-
-insert into componente_producto values (1,2,1,1,'Estructura del producto');
-
+INSERT INTO componente_producto (id_producto, id_insumo, cantidad_uso) VALUES (1,5,6), (1,6,1), (1,9,2);
 select * from componente_producto;
 
 create table tipo_caracteristica_producto(
@@ -48,12 +51,7 @@ create table tipo_caracteristica_producto(
 	descripcion varchar(50)
 );
 
-insert into tipo_caracteristica_producto values (1,'Color');
-insert into tipo_caracteristica_producto values (2,'Tamaño');
-insert into tipo_caracteristica_producto values (3,'Peso');
-insert into tipo_caracteristica_producto values (4,'Alto');
-insert into tipo_caracteristica_producto values (5,'Ancho');
-insert into tipo_caracteristica_producto values (6,'Largo');
+insert into tipo_caracteristica_producto values (1,'Color'), (2,'Tamaño'), (3,'Peso'), (4,'Alto'), (5,'Ancho'), (6,'Largo');
 
 select * from tipo_caracteristica_producto;
 
@@ -124,62 +122,59 @@ create table tipo_componente_costo(
     descripcion varchar(10)
 );
 
-insert into tipo_componente_costo values (1,'Base');
-insert into tipo_componente_costo values (2,'Transporte');
+insert into tipo_componente_costo values (1,'Base'), (2,'Transporte');
 
 select * from tipo_componente_costo;
 
+DROP TABLE if EXISTS componente_costo;
 create table componente_costo(
-	id numeric(6) primary key,
+	id MEDIUMINT PRIMARY KEY AUTO_INCREMENT,
     id_producto numeric(8) references producto(id),
     id_tipo_componente_costo numeric(1) references tipo_componente_costo(id),
     fecha_inicio date,
     fecha_fin date,
     costo numeric(8,2)
 );
-select * from componente_costo;
-delete from componente_costo;
+/*insert into componente_costo (id_producto, id_tipo_componente_costo, fecha_inicio, fecha_fin, costo)
+VALUES (6,1,'2020-01-01',NULL,2.57), (6,2,'2020-01-01',NULL,1.11), (7,1,'2020-01-01',NULL,5.1),
+(7,2,'2020-01-01',NULL,0.45), (8,1,'2020-01-01',NULL,6.45), (8,2,'2020-01-01',NULL,0.75);*/
+insert into componente_costo (id_producto, id_tipo_componente_costo, fecha_inicio, fecha_fin, costo)
+VALUES (5,1,'2020-01-01',NULL,1), (6,1,'2020-01-01',NULL,1), (9,1,'2020-01-01',NULL,1), (10,1,'2020-01-01',NULL,1);
 
-insert into componente_costo values (1,1,1,'2020-01-01',null,1.1);
-insert into componente_costo values (2,1,2,'2019-10-01','2020-02-01',2.3);
-insert into componente_costo values (3,1,1,'2019-11-01','2019-12-31',3.4);
-insert into componente_costo values (4,1,2,'2020-02-02',null,4.5);
-insert into componente_costo values (5,2,1,'2020-01-15','2020-01-24',2.4);
-insert into componente_costo values (6,2,2,'2020-03-15',null,2.5);
-insert into componente_costo values (7,2,1,'2020-01-25',null,6.2);
-insert into componente_costo values (8,2,2,'2019-05-15','2020-03-14',8.2);
+SELECT * FROM componente_costo;
+SELECT * FROM producto;
 
 create table tipo_componente_precio(
 	id numeric(1) primary key,
     descripcion varchar(10)
 );
 
-insert into tipo_componente_precio values (1,'Base');
-insert into tipo_componente_precio values (2,'Descuento');
+insert into tipo_componente_precio values (1,'Base'), (2,'Descuento');
 
 select * from tipo_componente_precio;
 
+DROP TABLE if EXISTS componente_precio;
 create table componente_precio(
-	id numeric(6) primary key,
+	id MEDIUMINT primary KEY AUTO_INCREMENT,
     id_producto numeric(8) references producto(id),
     id_tipo_componente_precio numeric(1) references tipo_componente_precio(id),
     fecha_inicio date,
     fecha_fin date,
-    precio numeric(8,2),
-    descuento numeric(5,2)
+    precio numeric(8,2)
 );
+insert into componente_precio (id_producto, id_tipo_componente_precio, fecha_inicio, fecha_fin, precio)
+VALUES (1,1,'2020-01-01',NULL,10);
 
 create table tipo_documento(
 	id numeric(1) primary key,
 	descripcion varchar(3)
 );
 
-insert into tipo_documento values (1,'DNI');
-insert into tipo_documento values (2,'RUC');
-insert into tipo_documento values (3,'CdE');
+insert into tipo_documento values (1,'DNI'), (2,'RUC'), (3,'CdE');
 
 select * from tipo_documento;
 
+drop table if exists party;
 create table party(
 	id MEDIUMINT primary key AUTO_INCREMENT,
 	id_tipo_documento numeric(1) references tipo_documento(id),
@@ -187,8 +182,7 @@ create table party(
 	unique(id_tipo_documento,numero_documento)
 );
 
-drop table party;
-
+DROP TABLE if EXISTS persona;
 create table persona(
 	id MEDIUMINT primary key AUTO_INCREMENT,
 	id_party MEDIUMINT unique references party(id),
@@ -199,8 +193,7 @@ create table persona(
 	fecha_nacimiento date
 );
 
-drop table persona;
-
+DROP TABLE if EXISTS organizacion;
 create table organizacion(
 	id MEDIUMINT primary key AUTO_INCREMENT,
 	id_party numeric(8) unique references party(id),
@@ -208,7 +201,6 @@ create table organizacion(
 	tipo_sociedad varchar(10),
 	comentario varchar(80)
 );
-drop table organizacion;
 
 create table tipo_rol(
 	id numeric(3) primary key,
@@ -280,25 +272,18 @@ create table tipo_contenedor(
 	descripcion varchar(10)
 );
 
-insert into tipo_contenedor values (1,'Bolsa');
-insert into tipo_contenedor values (2,'Caja');
+insert into tipo_contenedor values (1,'Bolsa'), (2,'Caja');
 
 select * from tipo_contenedor;
 
+DROP TABLE if EXISTS contenedor;
 create table contenedor(
-	id numeric(10) primary key,
+	id MEDIUMINT primary KEY AUTO_INCREMENT,
 	id_tipo_contenedor numeric(2) references tipo_contenedor(id),
-	id_almacen numeric(3) references almacen(id),
-	numero_serie numeric(8),
-	cantidad_en_mano numeric(8)
+	id_almacen numeric(3) references almacen(id)
 );
-	
-insert into contenedor values (1,1,1,1234,null);
-insert into contenedor values (2,2,3,1235,null);
-insert into contenedor values (3,1,2,1236,null);
 
-select * from contenedor;
-
+drop table if exists item;
 create table item(
 	id MEDIUMINT primary key AUTO_INCREMENT,
 	id_producto numeric(8) references producto(id),
@@ -307,38 +292,22 @@ create table item(
 	numero_serie numeric(11),
     cantidad_mano numeric(4)
 );
-drop table item;
 
-create table tipo_estado_pedido(
-	id numeric(1) primary key,
-    descripcion varchar(10)
-);
-
-insert into tipo_estado_pedido values (1,'En almacen');
-insert into tipo_estado_pedido values (2,'Despachado');
-insert into tipo_estado_pedido values (3,'Entregado');
-
+DROP TABLE IF EXISTS tipo_estado_item;
 create table tipo_estado_item(
 	id numeric(1) primary key,
     descripcion varchar(10)
 );
 
-insert into tipo_estado_item values (1,'Excelente');
-insert into tipo_estado_item values (2,'Bueno');
-insert into tipo_estado_item values (3,'Regular');
-insert into tipo_estado_item values (4,'Malo');
-insert into tipo_estado_item values (5,'Defectuoso');
-insert into tipo_estado_item values (6,'Reparación');
-insert into tipo_estado_item values (7,'Vendido');
+insert into tipo_estado_item values (1,'Disponible'), (2,'Vendido');
 
-select * from tipo_estado_item;
-
+DROP TABLE if EXISTS estado_item;
 create table estado_item(
-	id numeric(8) primary key,
+	id MEDIUMINT primary KEY AUTO_INCREMENT,
     id_item numeric(10) references item(id),
     id_tipo_estado_item numeric(1) references tipo_estado_item(id),
-    fecha_inicio date,
-    fecha_fin date
+    fecha_inicio timestamp,
+    fecha_fin timestamp
 );
 
 create table tipo_rol_almacen(
@@ -379,10 +348,7 @@ create table tipo_contacto(
     descripcion varchar(20)
 );
 
-insert into tipo_contacto values (1,'Celular');
-insert into tipo_contacto values (2,'Fijo');
-insert into tipo_contacto values (3,'Correo');
-insert into tipo_contacto values (4,'Telegram');
+insert into tipo_contacto values (1,'Celular'), (2,'Fijo'), (3,'Correo') ,(4,'Telegram');
 
 create table contacto(
 	id MEDIUMINT primary key AUTO_INCREMENT,
@@ -409,8 +375,7 @@ create table tipo_proposito_contacto(
     descripcion varchar(20)
 );
 
-insert into tipo_proposito_contacto values (1,'Personal');
-insert into tipo_proposito_contacto values (2,'Trabajo');
+insert into tipo_proposito_contacto values (1,'Personal'), (2,'Trabajo');
 
 select * from tipo_proposito_contacto;
 
@@ -427,9 +392,7 @@ create table tipo_evento_comunicacion(
     descripcion varchar(20)
 );
 
-insert into tipo_evento_comunicacion values (1,'Compra');
-insert into tipo_evento_comunicacion values (2,'Venta');
-insert into tipo_evento_comunicacion values (3,'Coordinación');
+insert into tipo_evento_comunicacion values (1,'Compra'), (2,'Venta'), (3,'Coordinación');
 
 select * from tipo_evento_comunicacion;
 
@@ -442,6 +405,7 @@ create table evento_comunicacion(
     fecha_hora_fin timestamp
 );
 
+drop table if exists pedido;
 create table pedido(
 	id MEDIUMINT primary key AUTO_INCREMENT,
     id_party_emisor MEDIUMINT references party(id),
@@ -456,27 +420,41 @@ create table pedido(
     impuestos numeric(6,2),
     subtotal numeric(8,2)
 );
-drop table pedido;
 
+drop table if exists tipo_estado_pedido;
+create table tipo_estado_pedido(
+	id numeric(1) primary key,
+    descripcion VARCHAR(12)
+);
+
+insert into tipo_estado_pedido values (1,'Por entregar'), (2,'Entregado');
+SELECT * FROM tipo_estado_pedido;
+
+drop table if exists estado_pedido;
 create table estado_pedido(
 	id MEDIUMINT primary key AUTO_INCREMENT,
     id_pedido MEDIUMINT references pedido(id),
     id_tipo_estado_pedido numeric(1) references tipo_estado_pedido(id),
-    fecha_hora_inicio timestamp,
-    fecha_hora_fin TIMESTAMP,
-    UNIQUE(id_tipo_estado_pedido,id_pedido)
+    fecha_hora_estado timestamp
 );
-drop table estado_pedido;
 
+DROP TABLE if EXISTS detalle_pedido;
 create table detalle_pedido(
-	id MEDIUMINT primary key AUTO_INCREMENT,
+	id INT UNSIGNED primary key AUTO_INCREMENT,
     id_pedido MEDIUMINT references pedido(id),
     id_producto numeric(8) references producto(id),
-    cantidad numeric(6),
-    precio_unitario numeric(8,2),
+    cantidad numeric(6) CHECK (cantidad > 0) NOT NULL,
+    precio_unitario numeric(8,2) CHECK (precio_unitario > 0) NOT NULL,
     unique (id_pedido, id_producto)
 );
-drop table detalle_pedido;
+
+SELECT * FROM pedido WHERE id = 17;
+
+call insertarDetalleCompra(17, "Pulsera PiAz PiNe AlCrPl", 10);
+
+SELECT * FROM detalle_pedido;
+
+UPDATE detalle_pedido SET cantidad = 4 WHERE id = 1;
 
 create table estado_detalle_pedido(
 	id numeric(10) primary key,
@@ -486,76 +464,3 @@ create table estado_detalle_pedido(
 );
 
 show tables;
-
-/*Lote*/
-
-create table item_respaldo(
-	id numeric(10) primary key,
-	id_producto numeric(8),
-	id_contenedor numeric(10),
-	id_almacen numeric(2),
-	numero_serie numeric(11),
-    cantidad_mano numeric(4)
-);
-
-insert into item_respaldo 
-select item.* from item i, estado_item ei, tipo_estado_item tei 
-where i.id = ei.id_item and ei.id_tipo_estado_item = tei.id 
-and tei.descripcion = 'Vendido';
-
-delete item, estado_item 
-from item i, estado_item ei, tipo_estado_item tei 
-where i.id = ei.id_item and ei.id_tipo_estado_item = tei.id 
-and tei.descripcion = 'Vendido';
-
-create table detalle_pedido_respaldo(
-	id numeric(10) primary key,
-    id_pedido numeric(8),
-    id_producto numeric(8),
-    cantidad numeric(6)
-);
-
-insert into detalle_pedido_respaldo 
-select detalle_pedido.* 
-from detalle_pedido dp, pedido p, estado_pedido ep, tipo_estado_pedido tep 
-where dp.id_pedido = p.id and p.id = ep.id_pedido 
-and ep.id_tipo_estado_pedido = tep.id 
-and tei.descripcion = 'Entregado';
-
-delete detalle_pedido, estado_detalle_pedido 
-from detalle_pedido dp, pedido p, estado_pedido ep, tipo_estado_pedido tep 
-where dp.id_pedido = p.id and p.id = ep.id_pedido 
-and ep.id_tipo_estado_pedido = tep.id 
-and tei.descripcion = 'Entregado';
-
-create table pedido_respaldo(
-	id numeric(8) primary key,
-    id_party_emisor numeric(8),
-    id_party_receptor numeric(8),
-    id_party_creador numeric(8),
-    id_party_modificador numeric(8),
-    fecha_hora_creacion date,
-    fecha_hora_modificacion date,
-    comision_vendedor numeric(6,2),
-    monto_pedido numeric(6,2),
-    cobro_logistico numeric(6,2),
-    impuestos numeric(6,2),
-    subtotal numeric(8,2)
-);
-
-insert into pedido_respaldo select pedido.* 
-from pedido p, estado_pedido ep, tipo_estado_pedido tep 
-where p.id = ep.id_pedido and ep.id_tipo_estado_pedido = tep.id 
-and tei.descripcion = 'Entregado';
-
-delete pedido, estado_pedido 
-from pedido p, estado_pedido ep, tipo_estado_pedido tep 
-where p.id = ep.id_pedido and ep.id_tipo_estado_pedido = tep.id 
-and tei.descripcion = 'Entregado';
-
-show tables;
-
-select * from contacto;
-
-select * from tipo_contacto;
-
